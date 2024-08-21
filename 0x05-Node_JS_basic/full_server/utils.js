@@ -1,44 +1,31 @@
-import fs from 'fs';
+const fs = require('fs');
 
-/**
- * Reads the data of students in a CSV data file.
- */
-const readDatabase = (dataPath) => new Promise((resolve, reject) => {
-  if (!dataPath) {
-    reject(new Error('Cannot load the database'));
-  }
-  if (dataPath) {
-    fs.readFile(dataPath, (err, data) => {
+function readDatabase(path) {
+  return new Promise((resolve, reject) => {
+    if (!path) {
+      reject(new Error('Cannot load the database'));
+    }
+    fs.readFile(path, 'utf8', (err, data) => {
       if (err) {
         reject(new Error('Cannot load the database'));
-      }
-      if (data) {
-        const fileLines = data
-          .toString('utf-8')
-          .trim()
-          .split('\n');
-        const studentGroups = {};
-        const dbFieldNames = fileLines[0].split(',');
-        const studentPropNames = dbFieldNames
-          .slice(0, dbFieldNames.length - 1);
+      } else {
+        const lines = data.split('\n');
+        const students = lines.slice(1, -1);
+        const obj = {};
 
-        for (const line of fileLines.slice(1)) {
-          const studentRecord = line.split(',');
-          const studentPropValues = studentRecord
-            .slice(0, studentRecord.length - 1);
-          const field = studentRecord[studentRecord.length - 1];
-          if (!Object.keys(studentGroups).includes(field)) {
-            studentGroups[field] = [];
+        students.forEach((student) => {
+          const data = student.split(',');
+          const field = data[data.length - 1];
+
+          if (!obj[field]) {
+            obj[field] = [];
           }
-          const studentEntries = studentPropNames
-            .map((propName, idx) => [propName, studentPropValues[idx]]);
-          studentGroups[field].push(Object.fromEntries(studentEntries));
-        }
-        resolve(studentGroups);
+          obj[field].push(data[0]);
+        });
+        resolve(obj);
       }
     });
-  }
-});
+  });
+}
 
 export default readDatabase;
-module.exports = readDatabase;
